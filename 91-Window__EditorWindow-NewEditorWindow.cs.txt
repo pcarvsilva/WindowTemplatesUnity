@@ -1,0 +1,80 @@
+using UnityEngine;
+using UnityEditor;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System;
+
+public class #SCRIPTNAME#Window : EditorWindow
+{
+
+    GameObject selected;
+    List<Component> cs;
+
+    [MenuItem("Window/#SCRIPTNAME#")]
+    static void Init()
+    {
+        #SCRIPTNAME#Window window = (#SCRIPTNAME#Window)EditorWindow.GetWindow(typeof(#SCRIPTNAME#Window));
+        window.cs = new List<Component>();
+        window.Show();
+    }
+
+    void OnGUI()
+    {
+        foreach (Component target in cs)
+        {
+            Editor e = Editor.CreateEditor(target);
+            if (e != null)
+                e.On#SCRIPTNAME#WindowGUI();
+        }
+    }
+
+    void OnSelectionChange()
+    {
+        if (Selection.activeGameObject != selected && Selection.activeGameObject != null && Selection.activeGameObject.GetComponents<MonoBehaviour>() != null)
+        {
+            selected = Selection.activeGameObject;
+            cs = selected.GetComponents(typeof(MonoBehaviour)).ToList();
+            Repaint();
+        }
+    }
+    
+}
+
+
+internal static class #SCRIPTNAME#WindowExtensionMethods
+{
+    public static void DrawDefault#SCRIPTNAME#WindowGUI(this Editor editor)
+    {
+        SerializedObject so = new SerializedObject(editor.target);
+        SerializedProperty sp = so.GetIterator();
+        FieldInfo[] properties = editor.target.GetType().GetFields().Where(prop => prop.IsDefined(typeof(#SCRIPTNAME#Attribute), false)).ToArray<FieldInfo>();
+        List<SerializedProperty> rendered = new List<SerializedProperty>();
+        Rect position = new Rect(0, 0, 500, 20);
+
+        while (sp.NextVisible(true))
+        {
+            foreach (FieldInfo propInfo in properties)
+            {
+                if (propInfo.Name == sp.name)
+                {
+                    position.y += 20;
+                    EditorGUI.PropertyField(position, sp, new GUIContent(sp.name), true);
+                }
+            }
+        }
+    }
+
+    public static void On#SCRIPTNAME#WindowGUI(this Editor editor)
+    {
+        foreach (MethodInfo myArrayMethodInfo in editor.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+        {
+            if (myArrayMethodInfo.Name == "On#SCRIPTNAME#GUI")
+            {
+                myArrayMethodInfo.Invoke(editor, null);
+                return;
+            }
+        }
+        editor.DrawDefault#SCRIPTNAME#WindowGUI();
+    }
+}
