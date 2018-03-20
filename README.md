@@ -1,7 +1,7 @@
-# WindowTemplatesUnity
+# Window Templates for Unity
 Simple to use templates for creating templates in unity
 
-#Installing
+# Installing
 Simply drag the templates into:
 
 *\Unity\Editor\Data\Resources\ScriptTemplates
